@@ -42,6 +42,11 @@ FAILED (SKIP=9, errors=29, failures=4)
     pip install nose-summary-report
     nosetests --with-summary-report
 
+You can choose other ways to aggregate the tests status:
+
+    nosetests --with-summary-report --summary-report-on class
+    nosetests --with-summary-report --summary-report-on module-path
+
 ## Development
 ### Releasing a new version
 With a valid `~/.pypirc`:

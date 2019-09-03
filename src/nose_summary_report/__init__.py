@@ -13,7 +13,7 @@ class SummaryReporter(Plugin):
         parser.add_option(
             '--summary-report-on', choices=('top-module', 'module-path', 'class'),
             default='top-module',
-            help='How to aggregate teh results in the report based on the module/class paths of the test functions')
+            help='How to aggregate the results in the report based on the module/class paths of the test functions')
 
     # override
     def configure(self, options, conf):
