@@ -54,5 +54,5 @@ With a valid `~/.pypirc`:
 1. edit version in `setup.py`
 2. `python setup.py sdist`
 3. `twine upload dist/*`
-4. `git commit -am "Version bump to $version" && git tag $version && git push && git push --tags`
+4. `git tag $version && git push && git push --tags`
 

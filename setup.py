@@ -10,7 +10,7 @@ with open(join(dirname(__file__), 'README.md')) as f:
 
 setup(
     name='nose-summary-report',
-    version='1.0.1',
+    version='1.0.2',
     license = 'GNU LGPL',
     description='Nose plugin that generates a final summary of tests status as a table',
     long_description=long_description,

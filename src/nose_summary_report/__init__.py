@@ -51,6 +51,8 @@ class SummaryReporter(Plugin):
     def report(self, stream):
         # Note: invoking pdb in this method or in add* methods does not work
         non_empty_columns = [status for status in self.columns if any(self.stats[key][status] for key in self.stats)]
+        if not non_empty_columns:
+            return
         max_col_len = max(len(status) for status in non_empty_columns)
         max_key_len = max(len(key or '') for key in self.stats.keys())
         header_format = '{:>' + str(max_key_len) + '}' + (' | {:' + str(max_col_len) + '}') * len(non_empty_columns)
