@@ -49,6 +49,7 @@ class SummaryReporter(Plugin):
 
     # override
     def report(self, stream):
+        # Note: invoking pdb in this method or in add* methods does not work
         non_empty_columns = [status for status in self.columns if any(self.stats[key][status] for key in self.stats)]
         max_col_len = max(len(status) for status in non_empty_columns)
         max_key_len = max(len(key or '') for key in self.stats.keys())
@@ -58,27 +59,28 @@ class SummaryReporter(Plugin):
         stream.writeln('Summary:')
         stream.writeln(header_format.format(self.summary_report_on, *non_empty_columns))
         stream.writeln('   ' + '-' * (max_key_len + len(non_empty_columns) * (max_col_len + 3)))
-        for row_key, stats in self.stats.items():
-            if row_key:  # can be None
+        for row_key in sorted(self.stats.keys()):
+            if row_key:  # can be an empty string
+                stats = self.stats[row_key]
                 stats['row_key'] = row_key
                 stream.writeln(row_format.format(**stats))
 
     def _row_key_from_test(self, test):
-        class_name = None
+        class_name = ''
         if hasattr(test, 'address'):
-            _, path, method = test.address()
+            _, module_path, method = test.address()
             if method and '.' in method:
                 class_name, method = method.split('.')
-        elif ' context=' in test.id() and test.id().count(':') == 1:
-            bracketed, method = test.id().split(':', 1)
-            path, class_name = bracketed[1:-1].split(' context=', 1)
+        elif hasattr(test, 'context'):
+            module_path = test.context.__module__
+            class_name = test.context.__name__
         else:
-            path, class_name, method = test.id().rsplit('.', 2)
+            module_path, class_name, method = test.id().rsplit('.', 2)
             if class_name[0].islower():
-                path += '.' + class_name
-                class_name = None
+                module_path += '.' + class_name
+                class_name = ''
         return {
-            'module-path': path,
-            'top-module': path.split('.', 1)[0],
+            'module-path': module_path,
+            'top-module': module_path.split('.', 1)[0],
             'class': class_name
         }[self.summary_report_on]
