@@ -1,15 +1,17 @@
 import os
 from collections import defaultdict
+from unittest.case import SkipTest
 
-from nose.plugins import Plugin
+from nose.plugins.errorclass import ErrorClassPlugin
+from nose.failure import Failure
 
 
-class SummaryReporter(Plugin):
+class SummaryReporter(ErrorClassPlugin):
     name = 'summary-report'
 
     # override
     def options(self, parser, env):
-        Plugin.options(self, parser, env)
+        ErrorClassPlugin.options(self, parser, env)
         parser.add_option(
             '--summary-report-on', choices=('top-module', 'module-path', 'class'),
             default='top-module',
@@ -17,10 +19,11 @@ class SummaryReporter(Plugin):
 
     # override
     def configure(self, options, conf):
-        Plugin.configure(self, options, conf)
+        ErrorClassPlugin.configure(self, options, conf)
         self.summary_report_on = options.summary_report_on
-        self.columns = ['success', 'error', 'failure', 'deprecated', 'skip']
+        self.columns = ['success', 'error', 'failure', 'skip']
         self.stats = defaultdict(lambda: {status: 0 for status in self.columns})
+        self.skipped_tests_msgs = set()
 
     # override
     def addSuccess(self, test):
@@ -30,7 +33,12 @@ class SummaryReporter(Plugin):
     # override
     def addError(self, test, err, capt=None):
         row_key = self._row_key_from_test(test)
-        self.stats[row_key]['error'] += 1
+        err_cls, exception, _ = err
+        if err_cls is SkipTest:
+            self.stats[row_key]['skip'] += 1
+            self.skipped_tests_msgs.add(str(exception))
+        else:
+            self.stats[row_key]['error'] += 1
 
     # override
     def addFailure(self, test, err, capt=None):
@@ -38,18 +46,8 @@ class SummaryReporter(Plugin):
         self.stats[row_key]['failure'] += 1
 
     # override
-    def addDeprecated(self, test, err, capt=None):
-        row_key = self._row_key_from_test(test)
-        self.stats[row_key]['deprecated'] += 1
-
-    # override
-    def addSkip(self, test, err, capt=None):
-        row_key = self._row_key_from_test(test)
-        self.stats[row_key]['skip'] += 1
-
-    # override
     def report(self, stream):
-        # Note: invoking pdb in this method or in add* methods does not work
+        # Note: invoking pdb in this method or in add* methods does not work, define a finalize(self, result) method instead
         non_empty_columns = [status for status in self.columns if any(self.stats[key][status] for key in self.stats)]
         if not non_empty_columns:
             return
@@ -66,6 +64,10 @@ class SummaryReporter(Plugin):
                 stats = self.stats[row_key]
                 stats['row_key'] = row_key
                 stream.writeln(row_format.format(**stats))
+        if self.skipped_tests_msgs:
+            stream.writeln('\nThere were some skipped tests messages:')
+            for msg in self.skipped_tests_msgs:
+                stream.writeln('- ' + msg)
 
     def _row_key_from_test(self, test):
         class_name = ''
