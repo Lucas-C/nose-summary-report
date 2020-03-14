@@ -31,7 +31,7 @@ class SummaryReporter(ErrorClassPlugin):
         self.stats[row_key]['success'] += 1
 
     # override
-    def addError(self, test, err, capt=None):
+    def addError(self, test, err):
         row_key = self._row_key_from_test(test)
         err_cls, exception, _ = err
         if err_cls is SkipTest:
